@@ -1,0 +1,19 @@
+/* Crossfoot theme: AFP NIGHT (dark) */
+:root {
+  --crossfoot-theme-name: "AFP Night";
+  --crossfoot-font-family: "Franklin Gothic Book", "Libre Franklin", Arial, sans-serif;
+  --crossfoot-title-font-family: "Franklin Gothic Medium", "Libre Franklin", Arial, sans-serif;
+  --crossfoot-font-size: 13px;
+  --crossfoot-title-font-size: 16px;
+  --crossfoot-text-color: #eef3f6;
+  --crossfoot-muted-color: #9db2c2;
+  --crossfoot-background: #061a2b;
+  --crossfoot-plot-background: #061a2b;
+  --crossfoot-grid-color: #19344a;
+  --crossfoot-palette: #2f8fc4, #d9741a, #1f9e78, #8a78d4, #ef5a3a, #1f9cb0, #b48c0e, #d0609a;
+  --crossfoot-sequential: #0e2c44, #77cbd5;
+  --crossfoot-table-header-background: #0076a8;
+  --crossfoot-table-header-color: #ffffff;
+  --crossfoot-table-border-color: #1d3a52;
+  --crossfoot-table-total-background: #0c2438;
+}

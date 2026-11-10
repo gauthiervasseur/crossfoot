@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crossfoot · Business intelligence for finance professionals</title>
+  <meta name="description" content="Crossfoot turns a finance CSV into charts and pivot tables by drag and drop. Offline, private, and dressed in AFP colours.">
+  <meta property="og:title" content="Crossfoot · BI for finance professionals">
+  <meta property="og:description" content="Insight that adds up. Drag-and-drop business intelligence for one CSV file.">
+  <meta property="og:image" content="assets/screens/table.jpg">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="stylesheet" href="assets/fonts.css">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="skip" href="#download">Skip to download</a>
+
+  <header class="nav">
+    <a class="nav-brand" href="#top"><img src="assets/icon-64.png" alt="" width="34" height="34"><span>Crossfoot</span><small>BI for AFP</small></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#cycle">Where it fits</a>
+      <a href="#themes">Themes</a>
+      <a href="#gallery">Gallery</a>
+      <a class="nav-cta" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ============================================================ HERO -->
+    <div class="hero">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="hero-text">
+          <p class="eyebrow">Business intelligence for finance professionals</p>
+          <h1 class="logo">Insight that adds up.</h1>
+          <p class="tagline">Crossfoot turns a CSV of balances, budgets and bank positions into charts and pivot tables. Drag, drop, cross-check. It runs on your own computer, so the ledger stays there.</p>
+          <div class="cta-row">
+            <a class="btn btn-cta big" href="#download">Download v<span data-version>1.0.0</span></a>
+            <a class="btn big" href="play/index.html#demo&amp;preset=table">Try it in your browser ›</a>
+          </div>
+          <p class="fineprint">Works offline · Mac app, or any browser on Windows &amp; Linux · No upload, no account</p>
+        </div>
+        <img class="hero-icon" src="assets/icon-256.png" alt="Crossfoot icon: three rising bars in a ledger grid, a light-blue totals row and column, and an orange grand-total cell with a check mark, on an AFP dark-blue tile" width="200" height="200">
+      </div>
+      <figure class="hero-shot">
+        <img src="assets/screens/table.jpg" alt="Crossfoot pivot table: outstanding amounts at the latest month end by region and entity in rows, cash, lending, borrowing and guarantees in columns, with heat shading, subtotals and grand totals" width="1600" height="955">
+      </figure>
+    </div>
+
+    <!-- ======================================================== FEATURES -->
+    <div class="section" id="features">
+      <p class="kicker">Features</p>
+      <h2 class="section-title">Everything you need to interrogate a finance table</h2>
+      <p class="lede">and nothing you have to configure.</p>
+      <div class="cards">
+        <article class="card"><div class="card-icon" aria-hidden="true">⇄</div><h3>Drag &amp; drop shelves</h3>
+          <p>Pick up a field on the left, drop it on <b>Columns</b>, <b>Rows</b>, <b>Values</b>, <b>Color</b> or <b>Filters</b>. The view redraws as soon as you let go.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">Σ</div><h3>Pivots that foot and cross-foot</h3>
+          <p>Several levels of rows and columns, subtotals, grand totals in both directions, heat shading and click-to-sort. Hit <b>⇅</b> to swap rows and columns.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">▙</div><h3>12 chart types</h3>
+          <p>Bar, stacked, line, area, scatter, donut, heatmap, treemap, box plot, histogram and KPI tiles. <b>Auto</b> picks a sensible one. Export any view as PNG, SVG or CSV.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">%</div><h3>Finance-aware defaults</h3>
+          <p>Rates, percentages and ratios start as <b>Average</b>, not Sum. Month-end dates get month grains. Decimal commas and thousands separators are read correctly.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">▼</div><h3>Filters for every sheet</h3>
+          <p>Searchable checklists for entities and banks, from/to ranges for amounts and dates. Pin one month end to read balances as a snapshot.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">✎</div><h3>AFP colours, or any brand</h3>
+          <p>The AFP theme is built in, with a dark twin, AFP Night. Presenting to a board or a bank? Load a <code>.css</code> file with their colours and fonts.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">❏</div><h3>Sheets &amp; workbooks</h3>
+          <p>Keep several sheets side by side. Crossfoot remembers your layout for each file and saves it, with filters and theme, to a small <code>.crossfoot.json</code> workbook.</p></article>
+        <article class="card"><div class="card-icon" aria-hidden="true">⌂</div><h3>Private by design</h3>
+          <p>Crossfoot runs entirely in your browser or Mac app. No server, no account, no upload. Treasury data never leaves your computer.</p></article>
+      </div>
+    </div>
+
+    <!-- ===================================================== HOW IT WORKS -->
+    <div class="section alt" id="how">
+      <p class="kicker">How it works</p>
+      <h2 class="section-title">From CSV to insight in three steps</h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><h3>Load a CSV</h3>
+            <p>Click <b>Load CSV</b> or drop a file anywhere on the window. Crossfoot sorts the columns into <span class="tag dim">Dimensions</span> (entities, banks, dates) and <span class="tag mea">Measures</span> (amounts, rates).</p></div>
+          <img src="assets/screens/splash.jpg" alt="Crossfoot start screen with Load CSV and demo buttons" loading="lazy" width="1600" height="955">
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><h3>Drag fields onto shelves</h3>
+            <p>Instrument to <b>Columns</b>, Outstanding to <b>Values</b>, Region to <b>Color</b>, and you have a stacked bar chart of the debt book. Click a pill to switch Sum to Average, or Year to Month.</p></div>
+          <img src="assets/screens/bar.jpg" alt="Stacked bar chart of outstanding amounts by instrument, split by region, at the latest month end" loading="lazy" width="1600" height="955">
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><h3>Pivot, filter, share</h3>
+            <p>Choose <b>Table</b> for a pivot, stack dimensions on rows and columns, turn on heat shading, and drop fields on <b>Filters</b> to zoom in. Export the result for the management memo or the deck.</p></div>
+          <img src="assets/screens/table.jpg" alt="Pivot table of outstanding amounts by region and entity, with cash, lending, borrowing and guarantees in columns" loading="lazy" width="1600" height="955">
+        </li>
+      </ol>
+      <div class="controls">
+        <h3>Shortcuts</h3>
+        <ul>
+          <li><kbd>Drag</kbd> field → shelf: add it</li>
+          <li><kbd>Drag</kbd> pill off its shelf: remove it</li>
+          <li><kbd>Double-click</kbd> field: add it to the best shelf</li>
+          <li><kbd>Right-click</kbd> field: more options</li>
+          <li><kbd>Click</kbd> pill: aggregation or date level</li>
+          <li><kbd>Click</kbd> table header: sort</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============================================================ CYCLE -->
+    <div class="section" id="cycle">
+      <p class="kicker">Where it fits</p>
+      <h2 class="section-title">The Interrogate step of the finance analytics cycle</h2>
+      <p class="lede">In the AFP sessions, finance analytics runs as a cycle. Crossfoot covers the step where business intelligence adds the most: slicing a clean, keyed finance table by entity, bank, instrument and month.</p>
+      <ol class="cycle">
+        <li><b>Think</b><span>Frame the decision</span></li>
+        <li><b>Ask</b><span>Sharpen the question</span></li>
+        <li><b>Collect</b><span>Consolidate the files</span></li>
+        <li><b>Transform</b><span>Clean, key, convert</span></li>
+        <li class="here"><b>Interrogate</b><span>Pivot and chart it</span></li>
+        <li><b>Communicate</b><span>Memo, deck, report</span></li>
+        <li><b>Act</b><span>Make the decision</span></li>
+        <li><b>Learn</b><span>Measure and repeat</span></li>
+      </ol>
+      <div class="cycle-note">
+        <h3>Bring your own decision-ready table</h3>
+        <ul class="chevrons">
+          <li>Load the table your Transform step produced, such as the session's <code>debt_clean.csv</code> (50,000 rows load in about a second).</li>
+          <li>Month-end balances are stocks: they add up within a month, not across months. Filter <b>Month End</b> to one date, or chart them by month.</li>
+          <li>Flagged rows stay visible: put the exception flag on <b>Color</b> or <b>Filters</b> to see how much of the book still needs review.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============================================================ THEMES -->
+    <div class="section alt" id="themes">
+      <p class="kicker">Themes</p>
+      <h2 class="section-title">AFP colours by default, any brand on demand</h2>
+      <p class="lede">The interface follows the AFP look. Charts and tables follow a theme, which is a CSS file: AFP, AFP Night, or your own. Both built-in palettes are checked for colour-blind separation and contrast.</p>
+      <div class="theme-split">
+        <figure class="shot"><img src="assets/screens/line.jpg" alt="Line chart of monthly outstanding amounts by category in the default AFP theme" loading="lazy" width="1600" height="955"><figcaption>AFP (default)</figcaption></figure>
+        <figure class="shot"><img src="assets/screens/dark.jpg" alt="Line chart in dark mode with the AFP Night theme" loading="lazy" width="1600" height="955"><figcaption>AFP Night · dark mode</figcaption></figure>
+      </div>
+      <div class="theme-code">
+        <div class="code-box">
+          <div class="code-head">board-pack.css</div>
+<pre><code><span class="c">/* every line is optional */</span>
+<span class="k">@import</span> url("https://fonts.googleapis.com/css2?family=Inter");
+
+<span class="s">:root</span> {
+  <span class="p">--crossfoot-font-family</span>: "Inter", sans-serif;
+  <span class="p">--crossfoot-font-size</span>: 13px;
+  <span class="p">--crossfoot-text-color</span>: #002b49;
+  <span class="p">--crossfoot-background</span>: #ffffff;
+  <span class="p">--crossfoot-grid-color</span>: #e4e1dd;
+  <span class="p">--crossfoot-palette</span>: #0076a8, #f08a24, #0b7e5e, #5b4a9e;
+  <span class="p">--crossfoot-sequential</span>: #e3f1f6, #002b49;
+  <span class="p">--crossfoot-table-header-background</span>: #002b49;
+  <span class="p">--crossfoot-table-header-color</span>: #ffffff;
+}</code></pre>
+        </div>
+        <div class="theme-notes">
+          <h3>How it works</h3>
+          <ul class="chevrons">
+            <li>Load it with <b>Theme CSS</b>, or drop the <code>.css</code> file on the window.</li>
+            <li>Crossfoot reads <code>--crossfoot-*</code> variables, plus plain <code>font-family</code>, <code>color</code> and <code>background</code> on <code>:root</code> or <code>body</code>.</li>
+            <li>Web fonts work through <code>@import</code> or <code>@font-face</code>. If Franklin Gothic is installed, Crossfoot uses it; otherwise the embedded Libre Franklin.</li>
+            <li>Up to 8 palette colours. Each value keeps its colour when you filter, and extra values fold into "Other".</li>
+            <li><b>Dark mode</b> switches the interface and flips AFP ↔ AFP Night for the charts.</li>
+          </ul>
+          <p class="dl-themes">Examples:
+            <a href="download/afp.css" download>afp.css</a> ·
+            <a href="download/afp-night.css" download>afp-night.css</a> ·
+            <a href="download/corporate.css" download>corporate.css</a> ·
+            <a href="download/arcade.css" download>arcade.css</a> ·
+            <a href="download/editorial-webfont.css" download>editorial-webfont.css</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== GALLERY -->
+    <div class="section" id="gallery">
+      <p class="kicker">Gallery</p>
+      <h2 class="section-title">A tour of the demo debt book</h2>
+      <p class="lede">All screenshots use the fictional <i>Meridian Components</i> debt book that ships with Crossfoot: 36 month ends of made-up cash, borrowing, lending and guarantee positions for 15 entities, 7 banks and the in-house bank, in k EUR.</p>
+      <div class="gallery">
+        <figure class="gallery-main"><img id="galleryMain" src="assets/screens/line.jpg" alt="Line chart of monthly outstanding amounts by category, with the October 2024 refinancing visible" width="1600" height="955"></figure>
+        <div class="gallery-thumbs" role="list">
+          <button class="thumb is-active" role="listitem" data-src="assets/screens/line.jpg" data-alt="Line chart of monthly outstanding amounts by category, with the October 2024 refinancing visible"><img src="assets/screens/line.jpg" alt="" loading="lazy" width="1600" height="955"><span>Line</span></button>
+          <button class="thumb" role="listitem" data-src="assets/screens/scatter.jpg" data-alt="Scatter plot of average rate versus outstanding amount per entity, sized by annual interest"><img src="assets/screens/scatter.jpg" alt="" loading="lazy" width="1600" height="955"><span>Scatter</span></button>
+          <button class="thumb" role="listitem" data-src="assets/screens/treemap.jpg" data-alt="Treemap of outstanding amounts by division and instrument"><img src="assets/screens/treemap.jpg" alt="" loading="lazy" width="1600" height="955"><span>Treemap</span></button>
+          <button class="thumb" role="listitem" data-src="assets/screens/kpi.jpg" data-alt="KPI tiles with outstanding, net position, annual interest and average rate"><img src="assets/screens/kpi.jpg" alt="" loading="lazy" width="1600" height="955"><span>KPI</span></button>
+          <button class="thumb" role="listitem" data-src="assets/screens/dark.jpg" data-alt="Dark mode with the AFP Night theme"><img src="assets/screens/dark.jpg" alt="" loading="lazy" width="1600" height="955"><span>Dark</span></button>
+          <button class="thumb" role="listitem" data-src="assets/screens/splash.jpg" data-alt="Crossfoot start screen"><img src="assets/screens/splash.jpg" alt="" loading="lazy" width="1600" height="955"><span>Start</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== DOWNLOAD -->
+    <div class="section alt" id="download">
+      <p class="kicker">Download</p>
+      <h2 class="section-title">Get Crossfoot</h2>
+      <p class="lede">Version <span data-version>1.0.0</span>. The native Mac app, or a zip that runs in any browser on Windows, Linux or Mac.</p>
+      <div class="platforms">
+        <article class="platform">
+          <img src="assets/icon-128.png" alt="" width="80" height="80" class="dl-icon">
+          <h3>Mac app</h3>
+          <p class="dl-meta">.dmg · <span data-size-dmg>2.2 MB</span></p>
+          <p class="platform-for">macOS 13 Ventura or later · Apple silicon &amp; Intel</p>
+          <a class="btn btn-cta big" href="download/Crossfoot-latest.dmg" download>Download .dmg</a>
+          <ol class="install">
+            <li><b>Open</b> the .dmg and drag Crossfoot onto Applications.</li>
+            <li><b>Launch</b> Crossfoot. It gets its own window and Dock icon.</li>
+          </ol>
+          <details class="gatekeeper">
+            <summary>First launch: "Apple could not verify…"</summary>
+            <p>Crossfoot isn't notarized by Apple yet, so macOS asks you to confirm once. Click <b>Done</b>, open <b>System Settings › Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b> next to Crossfoot. You won't be asked again.</p>
+          </details>
+        </article>
+        <article class="platform">
+          <img src="assets/icon-128.png" alt="" width="80" height="80" class="dl-icon">
+          <h3>Any computer</h3>
+          <p class="dl-meta">.zip · <span data-size>1.9 MB</span></p>
+          <p class="platform-for">Windows, Linux or Mac · Chrome, Edge, Firefox or Safari 16.4+</p>
+          <a class="btn big" href="download/Crossfoot-latest.zip" download>Download .zip</a>
+          <ol class="install">
+            <li><b>Unzip</b> it anywhere.</li>
+            <li><b>Double-click</b> <code>index.html</code> in the <code>Crossfoot</code> folder. It opens in your browser, no install needed.</li>
+          </ol>
+        </article>
+      </div>
+      <div class="dl-extra">
+        <div><h3>Private &amp; offline</h3><p>Both versions run entirely on your computer. No internet connection, no account, and your data never leaves your machine.</p></div>
+        <div><h3>In the box</h3><p>The app, the fictional Meridian debt book (<code>samples/</code>), example theme files (<code>themes/</code>), and offline copies of plotly.js and the Libre Franklin font.</p></div>
+        <div><h3>Extras</h3><p><a href="download/meridian-debt-book.csv" download>Demo CSV</a> · <a href="play/index.html">Use it in the browser</a> (your files stay on your computer there too).</p></div>
+      </div>
+    </div>
+
+    <!-- ============================================================ ABOUT -->
+    <div class="section about">
+      <div class="about-box">
+        <img src="assets/icon-128.png" alt="" width="110" height="110" class="about-icon">
+        <div>
+          <h2>Why "Crossfoot"?</h2>
+          <p>In accounting, to <b>foot</b> a column is to total it, and to <b>crossfoot</b> a table is to total it across its rows as well, then check that both grand totals agree. It is the oldest control in finance, and every pivot table does it. The icon shows exactly that: data columns rising like a bar chart, a totals row and a totals column, and the grand total where they cross, checked.</p>
+          <h3>FAQ</h3>
+          <dl class="faq">
+            <dt>Can I open Excel files?</dt><dd>Save the sheet as CSV first (File › Save As › CSV). Crossfoot works with one CSV file at a time.</dd>
+            <dt>How big can the file be?</dt><dd>Crossfoot keeps the whole file in memory. On a recent laptop, a 300,000-row (10 MB) file loads in under a second and pivots redraw in a fraction of a second.</dd>
+            <dt>Is my data uploaded anywhere?</dt><dd>No. Everything happens inside your browser, even in the online version.</dd>
+            <dt>Is the demo data real?</dt><dd>No. <i>Meridian Components</i>, its entities and its banks are invented, and every position and rate is generated.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p><b>Crossfoot</b> v<span data-version>1.0.0</span> · Insight that adds up.</p>
+    <p>Made for the AFP finance analytics sessions by Data Wise Academy · Charts by <a href="https://plotly.com/javascript/">plotly.js</a> (MIT) · Font: Libre Franklin (SIL OFL)</p>
+  </footer>
+
+  <script>
+    // Gallery: click a thumbnail to show it big.
+    document.querySelectorAll('.thumb').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var main = document.getElementById('galleryMain');
+        main.src = b.dataset.src; main.alt = b.dataset.alt;
+        document.querySelectorAll('.thumb').forEach(function (t) { t.classList.toggle('is-active', t === b); });
+      });
+    });
+  </script>
+</body>
+</html>

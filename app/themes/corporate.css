@@ -1,0 +1,18 @@
+/* Crossfoot theme: CORPORATE (light) */
+:root {
+  --crossfoot-theme-name: "Corporate";
+  --crossfoot-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --crossfoot-title-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --crossfoot-font-size: 13px;
+  --crossfoot-text-color: #0b0b0b;
+  --crossfoot-muted-color: #52514e;
+  --crossfoot-background: #fcfcfb;
+  --crossfoot-plot-background: #fcfcfb;
+  --crossfoot-grid-color: #e6e5e0;
+  --crossfoot-palette: #2a78d6, #eb6834, #1baf7a, #eda100, #e87ba4, #008300, #6250d6, #e34948;
+  --crossfoot-sequential: #cde2fb, #104281;
+  --crossfoot-table-header-background: #f0efec;
+  --crossfoot-table-header-color: #0b0b0b;
+  --crossfoot-table-border-color: #e6e5e0;
+  --crossfoot-table-total-background: #f5f4f1;
+}

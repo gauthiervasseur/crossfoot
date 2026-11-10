@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Crossfoot icon: a ledger grid whose columns rise like a bar chart, a totals
+       row and a totals column (light blue) that cross at the grand total (orange,
+       checked): the table foots and cross-foots. AFP Dark Blue tile. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#003a61"/>
+      <stop offset="1" stop-color="#002b49"/>
+    </linearGradient>
+    <clipPath id="r"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="512" height="512" fill="url(#tile)"/>
+    <!-- empty ledger cells -->
+    <g fill="#ffffff" opacity=".09">
+      <rect x="72"  y="72"  width="80" height="80" rx="14"/>
+      <rect x="168" y="72"  width="80" height="80" rx="14"/>
+      <rect x="72"  y="168" width="80" height="80" rx="14"/>
+    </g>
+    <!-- the data columns, rising like a bar chart -->
+    <g fill="#ffffff">
+      <rect x="72"  y="216" width="80" height="128" rx="14"/>
+      <rect x="168" y="152" width="80" height="192" rx="14"/>
+      <rect x="264" y="72"  width="80" height="272" rx="14"/>
+    </g>
+    <!-- totals column and totals row -->
+    <g fill="#77cbd5">
+      <rect x="360" y="72"  width="80" height="80" rx="14"/>
+      <rect x="360" y="168" width="80" height="80" rx="14"/>
+      <rect x="360" y="264" width="80" height="80" rx="14"/>
+      <rect x="72"  y="360" width="80" height="80" rx="14"/>
+      <rect x="168" y="360" width="80" height="80" rx="14"/>
+      <rect x="264" y="360" width="80" height="80" rx="14"/>
+    </g>
+    <!-- grand total: both ways agree -->
+    <rect x="352" y="352" width="96" height="96" rx="18" fill="#fb8f2e"/>
+    <path d="M374 400 L393 419 L427 383" fill="none" stroke="#002b49" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

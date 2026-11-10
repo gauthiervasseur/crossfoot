@@ -1,0 +1,19 @@
+/* Crossfoot theme: ARCADE (retro) */
+:root {
+  --crossfoot-theme-name: "Arcade";
+  --crossfoot-font-family: "VT323", "Courier New", monospace;
+  --crossfoot-title-font-family: "Press Start 2P", "VT323", monospace;
+  --crossfoot-font-size: 19px;
+  --crossfoot-title-font-size: 12px;
+  --crossfoot-text-color: #f0efec;
+  --crossfoot-muted-color: #b9b2dd;
+  --crossfoot-background: #120b2e;
+  --crossfoot-plot-background: #120b2e;
+  --crossfoot-grid-color: #2f2660;
+  --crossfoot-palette: #3987e5, #d95926, #199e70, #c98500, #d55181, #008300, #9085e9, #e66767;
+  --crossfoot-sequential: #1d3a6e, #b7d3f6;
+  --crossfoot-table-header-background: #1f1550;
+  --crossfoot-table-header-color: #ffd400;
+  --crossfoot-table-border-color: #33296b;
+  --crossfoot-table-total-background: #1a1145;
+}

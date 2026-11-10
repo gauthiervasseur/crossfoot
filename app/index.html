@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crossfoot · BI for finance professionals</title>
+  <meta name="description" content="Crossfoot: drag-and-drop business intelligence for finance CSV files, in AFP colours.">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/crossfoot.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/icon-64.png" class="brand-icon" alt="" width="36" height="36">
+        <span class="brand-name">Crossfoot</span>
+        <span class="brand-sub">BI for AFP</span>
+      </div>
+      <nav class="toolbar" aria-label="Main">
+        <button class="btn btn-primary" data-action="open-csv" title="Load a CSV file (or drop one anywhere)">Load CSV</button>
+        <button class="btn" data-action="demo" title="Load the fictional Meridian Components debt book">Demo</button>
+        <button class="btn" data-action="open-theme" title="Load a CSS file with your colors and fonts">Theme CSS</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="btn" data-action="save-game" title="Save layout, filters and theme to a file">Save</button>
+        <button class="btn" data-action="load-game" title="Open a saved .crossfoot.json layout">Open</button>
+        <button class="btn" data-action="export" title="Export chart or data">Export</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="btn btn-toggle" data-action="toggle-sfx" aria-pressed="false">Sound off</button>
+        <button class="btn btn-toggle" data-action="toggle-dark" aria-pressed="false">Dark mode</button>
+        <button class="btn" data-action="help" title="How to use Crossfoot">?</button>
+      </nav>
+    </header>
+
+    <aside class="sidebar">
+      <div class="tabs" role="tablist">
+        <button class="tab is-active" role="tab" data-tab="fields">Fields</button>
+        <button class="tab" role="tab" data-tab="filters" data-drop="filters">Filters <span class="badge" id="filterCount"></span></button>
+        <button class="tab" role="tab" data-tab="theme">Theme</button>
+      </div>
+      <section class="panel" id="panel-fields" data-drop="trash">
+        <div class="dataset-card" id="datasetCard"></div>
+        <input class="search" id="fieldSearch" placeholder="Search fields" autocomplete="off" spellcheck="false">
+        <h3 class="group-title dim">Dimensions</h3>
+        <ul id="dimList" class="field-list"></ul>
+        <h3 class="group-title mea">Measures</h3>
+        <ul id="meaList" class="field-list"></ul>
+      </section>
+      <section class="panel" id="panel-filters" data-drop="filters" hidden></section>
+      <section class="panel" id="panel-theme" hidden></section>
+    </aside>
+
+    <main class="workspace">
+      <div class="markrow">
+        <div class="marks" id="markBar" role="toolbar" aria-label="Chart type"></div>
+        <div class="viz-options" id="vizOptions"></div>
+      </div>
+      <div class="shelves">
+        <div class="shelf" data-shelf="columns">
+          <span class="shelf-label">Columns</span>
+          <div class="shelf-drop" data-drop="columns"></div>
+          <button class="swap" data-swap title="Pivot: swap rows and columns">⇅</button>
+        </div>
+        <div class="shelf" data-shelf="rows">
+          <span class="shelf-label">Rows</span>
+          <div class="shelf-drop" data-drop="rows"></div>
+        </div>
+        <div class="shelf-row">
+          <div class="shelf" data-shelf="values">
+            <span class="shelf-label">Values</span>
+            <div class="shelf-drop" data-drop="values"></div>
+          </div>
+          <div class="shelf narrow" data-shelf="color">
+            <span class="shelf-label">Color</span>
+            <div class="shelf-drop" data-drop="color"></div>
+          </div>
+          <div class="shelf" data-shelf="filters">
+            <span class="shelf-label">Filters</span>
+            <div class="shelf-drop" data-drop="filters"></div>
+          </div>
+        </div>
+      </div>
+      <div class="viz-frame">
+        <div id="viz" class="viz"></div>
+      </div>
+      <div class="sheet-tabs" id="sheetTabs"></div>
+    </main>
+
+    <footer class="statusbar" id="status"></footer>
+  </div>
+
+  <input type="file" id="csvInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" hidden>
+  <input type="file" id="themeInput" accept=".css,text/css" hidden>
+  <input type="file" id="gameInput" accept=".json,application/json" hidden>
+
+  <div id="menu" class="popmenu" hidden></div>
+  <div id="modal" class="modal" hidden></div>
+  <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+  <div id="loading" class="loading" hidden>
+    <div class="loading-box"><div class="loading-text">Loading</div><div class="loading-bar"><span></span></div></div>
+  </div>
+  <div class="file-drop-overlay" aria-hidden="true"><div>Drop to load<small>.csv data · .css theme · .json workbook</small></div></div>
+
+  <script src="vendor/plotly.min.js"></script>
+  <script src="samples/demo-data.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/pivot.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

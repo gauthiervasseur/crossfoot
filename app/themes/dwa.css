@@ -1,0 +1,30 @@
+/* Crossfoot theme: DWA (Data Wise Academy), light.
+ * Derived from the DWA slide theme (Markdown Dossiers/DWA1/styles/dwa.css):
+ * navy ink #041e42 on white, orange accent, cream #fff3e6 surfaces, Montserrat.
+ *
+ * Montserrat: used if installed on the computer; the @import loads it when online;
+ * otherwise Arial is used.
+ *
+ * Series palette: DWA blue and orange first, then hues ordered so neighbours stay
+ * distinct for colour-blind readers (validated: lightness, chroma, CVD, contrast >= 3:1).
+ */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap");
+
+:root {
+  --crossfoot-theme-name: "DWA";
+  --crossfoot-font-family: "Montserrat", Arial, sans-serif;
+  --crossfoot-title-font-family: "Montserrat", Arial, sans-serif;
+  --crossfoot-font-size: 13px;
+  --crossfoot-title-font-size: 16px;
+  --crossfoot-text-color: #041e42;
+  --crossfoot-muted-color: #52627a;
+  --crossfoot-background: #ffffff;
+  --crossfoot-plot-background: #ffffff;
+  --crossfoot-grid-color: #e3e8ef;
+  --crossfoot-palette: #d97000, #1f5aa6, #d9659c, #a35a00, #0e8fa8, #c83a3a, #7a5cc7, #1f9e5f;
+  --crossfoot-sequential: #e6edf7, #041e42;
+  --crossfoot-table-header-background: #041e42;
+  --crossfoot-table-header-color: #ffffff;
+  --crossfoot-table-border-color: #e3e8ef;
+  --crossfoot-table-total-background: #fff3e6;
+}
