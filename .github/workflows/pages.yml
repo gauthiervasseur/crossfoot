@@ -1,5 +1,6 @@
 # Publishes the website/ folder (plus a live copy of the app in play/) to GitHub Pages.
 # One-time setup: repo Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Re-run by hand: Actions tab > Pages > Run workflow.
 name: Pages
 
 on:
