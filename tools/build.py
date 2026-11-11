@@ -9,6 +9,7 @@ Steps
   3. app/themes/*.css      - example theme files, extracted from js/theme.js
   4. dist/Crossfoot-<v>.zip    - the downloadable app (folder "Crossfoot/")
   5. dist/Crossfoot-<v>.dmg    - native macOS app (tools/build_mac.py; Macs only)
+     (Windows: tools/build_windows.ps1 on a PC, or the GitHub workflow, gives Crossfoot-<v>-Setup.exe)
   6. website/              - landing page + live copy of the app in website/play/
                              + zip and dmg in website/download/
 """
@@ -158,6 +159,12 @@ def build_site(zpath, dmg=None):
     if dmg:
         shutil.copy2(dmg, dl / dmg.name)
         shutil.copy2(dmg, dl / "Crossfoot-latest.dmg")
+    # Windows installer and zip: built on a PC or by the GitHub workflow (tools/build_windows.ps1), then dropped in dist/.
+    for kind, latest in ((f"Crossfoot-{version()}-Setup.exe", "Crossfoot-latest-Setup.exe"),
+                         (f"Crossfoot-{version()}-Windows.zip", "Crossfoot-latest-Windows.zip")):
+        if (DIST / kind).exists():
+            shutil.copy2(DIST / kind, dl / kind)
+            shutil.copy2(DIST / kind, dl / latest)
     for name in ("afp.css", "afp-night.css", "arcade.css", "corporate.css", "editorial-webfont.css"):
         shutil.copy2(APP / "themes" / name, dl / name)
     shutil.copy2(APP / "samples" / "meridian-debt-book.csv", dl / "meridian-debt-book.csv")

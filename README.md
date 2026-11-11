@@ -8,7 +8,7 @@ the open-source stand-in. Drag fields onto shelves to get charts and pivot table
 tabs, and restyle the visualizations with a CSS file. Runs fully offline in the browser:
 double-click `index.html`, nothing to install.
 
-Crossfoot is a rebrand of Polder (`~/Shared-SynologyDrive/SynologyDrive/Code/Polder`, itself a rebrand of Tatko) with the
+Crossfoot is a rebrand of Polder (itself a rebrand of Tatko) with the
 same engine, plus a few finance-specific defaults.
 
 **The name.** To *foot* a column is to total it; to *crossfoot* a table is to total it across its
@@ -56,8 +56,9 @@ Crossfoot/
 │   ├── samples/          generated demo dataset (fictional)
 │   └── themes/           example theme CSS files (afp.css, afp-night.css, …)
 ├── desktop/macos/        native Mac wrapper (Swift + WKWebView)
+├── desktop/windows/      native Windows wrapper (Python + pywebview/WebView2), installer.iss
 ├── website/              static landing page, ready to upload as-is
-├── dist/                 Crossfoot-<version>.zip, Crossfoot-<version>.dmg, Crossfoot.app
+├── dist/                 Crossfoot-<version>.zip, .dmg, Crossfoot.app (and -Setup.exe / -Windows.zip once built on Windows)
 └── tools/                build scripts, icon.svg
 ```
 
@@ -71,9 +72,17 @@ python3 -m http.server 8765 --bind 127.0.0.1 &   # then:
 tools/screenshots.sh                     # regenerate website screenshots
 ```
 
-The Mac app is ad-hoc signed, not notarized (see the Tatko README in `SynologyDrive/Code/Tatko` for notarization steps).
+The Mac app is ad-hoc signed, not notarized.
+
+### Windows
+
+`tools/build_windows.ps1` builds the Windows app on a Windows 10/11 PC (PyInstaller does not cross-compile): `powershell -ExecutionPolicy Bypass -File tools\build_windows.ps1`. It needs Python 3.10 to 3.13 on PATH and gives `dist/Crossfoot-<version>-Windows.zip` plus, if Inno Setup 6 is installed, `dist/Crossfoot-<version>-Setup.exe` (per-user, no admin rights). The wrapper is `desktop/windows/crossfoot_win.py`: it serves `app/` from `127.0.0.1:8766` and shows it in a WebView2 window (pywebview), so layouts and themes persist between launches. Without a PC, the workflow `.github/workflows/windows-build.yml` builds it on a GitHub runner (Actions › Build Windows app › Run workflow; pushing a tag such as `v1.0.0` also attaches the files to a Release). Not code-signed (SmartScreen: More info › Run anyway). The Windows build is not yet tested on a real PC; the launcher itself is tested on the Mac with `uv run desktop/windows/crossfoot_win.py --serve`.
+
 Self-test: `CROSSFOOT_SELFTEST=/some/dir dist/Crossfoot.app/Contents/MacOS/Crossfoot`.
-`tools/publish_pages.sh` publishes `website/` to a `gh-pages` branch once the repo has a remote.
+
+### Website on GitHub Pages
+
+The code lives in the AFP workshop folder (`3. Transform_Interrogate/Crossfoot/`) and is published as its own repository, **gauthiervasseur/crossfoot**. `.github/workflows/pages.yml` runs `tools/pages.py` on every push to `main` and publishes `website/` (with the live app in `play/`) to `https://gauthiervasseur.github.io/crossfoot/`. One-time: Settings › Pages › Source: GitHub Actions. The page's Mac and Windows download buttons point at the latest GitHub Release: attach `Crossfoot-latest.dmg` (a copy of `dist/Crossfoot-<version>.dmg`) by hand; the workflow attaches `Crossfoot-latest-Setup.exe` and `Crossfoot-latest-Windows.zip` when you push a tag. Run `tools/pages.py` locally to preview the Pages copy in `_site/`.
 
 ## Deep links
 

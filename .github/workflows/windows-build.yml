@@ -1,0 +1,59 @@
+# Builds the Windows app (Crossfoot-<version>-Setup.exe and a zip) on a GitHub-hosted Windows
+# runner, since PyInstaller cannot cross-compile from a Mac.
+#   By hand:    Actions > Build Windows app > Run workflow, then download the artifact.
+#   On a tag:   git tag v1.0.0 && git push origin v1.0.0  also attaches the files to a Release
+#               (as Crossfoot-latest-Setup.exe and Crossfoot-latest-Windows.zip, which is what the
+#               website's download buttons point at). Add Crossfoot-latest.dmg to the Release by hand.
+# The exe is not code-signed: Windows SmartScreen asks once (More info > Run anyway).
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Inno Setup (for the installer)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Build
+        shell: pwsh
+        run: ./tools/build_windows.ps1
+
+      - name: Stable file names for the website's download buttons
+        shell: pwsh
+        run: |
+          Copy-Item (Get-Item dist/Crossfoot-*-Setup.exe | Select-Object -First 1) dist/Crossfoot-latest-Setup.exe
+          Copy-Item (Get-Item dist/Crossfoot-*-Windows.zip | Select-Object -First 1) dist/Crossfoot-latest-Windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crossfoot-Windows
+          path: |
+            dist/Crossfoot-latest-Setup.exe
+            dist/Crossfoot-latest-Windows.zip
+          if-no-files-found: error
+
+      - name: Attach to the Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/Crossfoot-latest-Setup.exe
+            dist/Crossfoot-latest-Windows.zip

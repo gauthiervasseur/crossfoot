@@ -6,3 +6,4 @@ website/download/
 .DS_Store
 __pycache__/
 *.pyc
+_site/
