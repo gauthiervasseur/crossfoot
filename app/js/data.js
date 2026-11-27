@@ -313,14 +313,18 @@
     if (f.type === 'number') return AGGS.map((a) => a[0]);
     if (f.type === 'date') return ['min', 'max', 'count', 'countd'];
     if (f.type === 'records') return ['count'];
+    if (f.type === 'calc') return ['calc'];
     return ['countd', 'count'];
   }
   // Rates, percentages, ratios and prices do not add up: they default to Average.
-  const AVERAGED = /(^|[^a-z])(rates?|fx|pct)([^a-z]|$)|%|percent|ratio|yield|price/i;
+  // Fields named like rates, shares, ratios, prices, per-unit amounts, scores or
+  // day counts start as Average: summing them across rows means nothing.
+  const AVERAGED = /(^|[^a-z])(rates?|fx|pct|avg|average|mean|score|days?|share|per)([^a-z]|$)|%|percent|ratio|yield|price/i;
   function defaultAgg(f) { return f.type === 'number' && AVERAGED.test(f.name) ? 'avg' : allowedAggs(f)[0]; }
 
   function measureSpec(ds, pill) {
     const f = ds.byName[pill.field];
+    if (f.type === 'calc') return T.Calc.spec(ds, f);
     if (f.type === 'records') {
       return { field: f, agg: 'count', label: RECORDS, get: () => 1, fmt: fmtNum, raw: () => 1 };
     }
@@ -372,8 +376,14 @@
     return null;
   };
 
+  /** A fresh accumulator for a measure spec (calculated measures bring their own). */
+  const newAcc = (m) => (m.makeAcc ? m.makeAcc() : new Acc(m.agg));
+  /** Let calculated measures compute their TOTAL() aggregates over the rows in view. */
+  const prepare = (meas, idx) => meas.forEach((m) => m.prepare && m.prepare(idx));
+
   /** Group filtered rows by dimension specs, aggregating measure specs. */
   function groupBy(idx, dims, meas) {
+    prepare(meas, idx);
     const map = new Map();
     const out = [];
     const nd = dims.length, nm = meas.length;
@@ -384,7 +394,7 @@
       for (let j = 0; j < nd; j++) { keys[j] = dims[j].key(i); k += keyStr(keys[j]) + SEP; }
       let g = map.get(k);
       if (!g) {
-        g = { keys: keys.slice(), accs: meas.map((m) => new Acc(m.agg)) };
+        g = { keys: keys.slice(), accs: meas.map(newAcc) };
         map.set(k, g); out.push(g);
       }
       for (let j = 0; j < nm; j++) g.accs[j].add(meas[j].get(i));
@@ -475,7 +485,7 @@
     SEP, NULL_LABEL, RECORDS, GRAINS, GRAIN_LABEL, AGGS,
     fromCSV, decode, parseRows, detectDelimiter, parseNum, parseDate,
     cmp, cmpKeys, keyStr, joinKeys, fmtNum, fmtDay, fmtExact, dateKey, dateLabel,
-    dimSpec, measureSpec, allowedAggs, defaultAgg, Acc, groupBy,
+    dimSpec, measureSpec, allowedAggs, defaultAgg, Acc, newAcc, prepare, groupBy,
     domain, extent, filterKind, isActive, filterIndex, toCSV,
   });
 })();

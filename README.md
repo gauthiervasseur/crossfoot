@@ -27,10 +27,39 @@ Source: `tools/icon.svg`.
 | DLL / DLL Night chart themes                   | AFP / AFP Night, palettes validated for CVD separation and contrast |
 | "Lowlands Asset Finance" contract portfolio    | Fictional "Meridian Components" group debt book (month-end positions, k EUR) |
 | Presets sum everything                         | Snapshot presets pin the latest month end (balances are stocks)  |
-| Every number defaults to Sum                   | Fields named like rates, %, ratios, yields or prices default to Average |
+| Every number defaults to Sum                   | Fields named like rates, %, ratios, yields, prices or day counts default to Average |
+
+Since v1.1 Crossfoot also has the **calculated measures** first built for DWA42
+(`DWA1/applications/DWA42`), an **All points** switch on scatter plots, a clear refusal of CSV files
+over 400 MB, and toasts that stay up long enough to read (click to close).
 
 Everything else (12 chart types, pivot engine, filters, theme CSS, save/open, PNG/SVG/CSV
 export, Mac app) is unchanged.
+
+## Calculated measures
+
+Click **f(x) New calculation** (under the measures, or next to the Values shelf).
+
+- **Guided**: pick a template (Ratio, Rate %, Difference, Product, Share of total, Per record),
+  then the aggregate and field for A and B and the operator. A sentence spells out the result.
+- **Formula**: type freely, with buttons for operators, aggregates and functions, and field chips.
+  Errors are explained and the culprit is highlighted.
+- A live preview shows the total and one line per member of a dimension. Format as Number,
+  Percent, Currency $ or Currency €, with 0 to 2 decimals.
+
+Grammar: `SUM AVG MEDIAN MIN MAX COUNT COUNTD` over one `[Field]` (or `COUNT(*)`), `+ - * / ^ ( )`,
+`TOTAL(x)` (x over every row in view, for shares of total), `ROUND(x, n)`, `ABS(x)`, `SQRT(x)`,
+and `[Another calculation]`. A formula is evaluated per group from that group's aggregates (each
+pivot cell, bar, subtotal and grand total), so an effective rate is total interest over total
+balances, never an average of row rates. Division by zero gives an empty cell. Calculations are
+saved with the layout (autosave per file, and `.crossfoot.json` workbooks).
+
+The Meridian demo ships with four: **Effective Rate %** (`SUM([Annual Interest (k EUR)]) /
+SUM([Outstanding (k EUR)])`, the weighted rate), **Variance vs Budget (k EUR)**, **Variance vs
+Budget %** and **Share of Outstanding**. Engine: `app/js/calc.js`.
+
+Limit: rows are never combined before aggregation, so a weighted rate needs an interest (or
+amount × rate) column in the CSV; `debt_clean.csv` has `TOTAL_RATE` but no interest column.
 
 ## Workshop use
 
@@ -86,7 +115,7 @@ The code lives in the AFP workshop folder (`3. Transform_Interrogate/Crossfoot/`
 
 ## Deep links
 
-`index.html#demo&preset=table|bar|line|scatter|treemap|kpi&theme=afp|afp-night|arcade|corporate&dark|light&mute`
+`index.html#demo&preset=table|bar|line|scatter|treemap|kpi|calc&theme=afp|afp-night|arcade|corporate&dark|light&mute`
 
 ## Theme CSS
 

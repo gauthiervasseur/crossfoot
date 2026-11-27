@@ -275,7 +275,9 @@
     const rawOK = !detail.length && m3.every((m) => m.field.type === 'number');
     let sampled = false;
     if (rawOK) {
-      const step = Math.max(1, Math.ceil(idx.length / MAX_RAW_POINTS));
+      // Above MAX_RAW_POINTS rows, plot every n-th row unless the sheet's "All points" option is on.
+      const limit = sheet.opts.allPoints ? Infinity : MAX_RAW_POINTS;
+      const step = Math.max(1, Math.ceil(idx.length / limit));
       sampled = step > 1;
       for (let r = 0; r < idx.length; r += step) {
         const i = idx[r];
@@ -323,7 +325,7 @@
     layout.showlegend = !!series;
     layout.hovermode = 'closest';
     const notes = [];
-    if (sampled) notes.push('Showing a sample of ' + points.length.toLocaleString() + ' rows');
+    if (sampled) notes.push('Showing a sample of ' + points.length.toLocaleString() + ' of ' + idx.length.toLocaleString() + ' rows · turn on All points to plot every row');
     if (!rawOK && !detail.length) notes.push('One dot per color value - add dimensions to split');
     if (enc.measure) notes.push('A measure on color is not used by scatter - use a dimension');
     return { kind: 'plot', data, layout, notes };

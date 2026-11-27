@@ -20,6 +20,7 @@
     const cols = sheet.shelves.columns.map((p) => T.dimSpec(ds, p));
     let meas = sheet.shelves.values.map((p) => T.measureSpec(ds, p));
     if (!meas.length) meas = [T.measureSpec(ds, { field: T.RECORDS })];
+    T.prepare(meas, idx);
     const R = rows.length, C = cols.length, M = meas.length;
 
     const buckets = new Map();
@@ -52,7 +53,7 @@
         for (const ct of colTargets) {
           const bk = prefixes[l] + '|' + ct;
           let accs = buckets.get(bk);
-          if (!accs) { accs = meas.map((m) => new T.Acc(m.agg)); buckets.set(bk, accs); }
+          if (!accs) { accs = meas.map(T.newAcc); buckets.set(bk, accs); }
           for (let j = 0; j < M; j++) accs[j].add(meas[j].get(i));
         }
       }

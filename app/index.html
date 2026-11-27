@@ -47,6 +47,9 @@
         <ul id="dimList" class="field-list"></ul>
         <h3 class="group-title mea">Measures</h3>
         <ul id="meaList" class="field-list"></ul>
+        <h3 class="group-title calc">Calculations</h3>
+        <ul id="calcList" class="field-list"></ul>
+        <button class="calc-new" data-calc-new title="Build a formula over aggregates: ratios, margins, differences, shares of total"><b>f(x)</b> New calculation</button>
       </section>
       <section class="panel" id="panel-filters" data-drop="filters" hidden></section>
       <section class="panel" id="panel-theme" hidden></section>
@@ -71,6 +74,7 @@
           <div class="shelf" data-shelf="values">
             <span class="shelf-label">Values</span>
             <div class="shelf-drop" data-drop="values"></div>
+            <button class="shelf-fx" data-calc-new title="New calculation (formula over aggregates)">f(x)</button>
           </div>
           <div class="shelf narrow" data-shelf="color">
             <span class="shelf-label">Color</span>
@@ -106,6 +110,7 @@
   <script src="vendor/plotly.min.js"></script>
   <script src="samples/demo-data.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/calc.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/pivot.js"></script>
   <script src="js/charts.js"></script>

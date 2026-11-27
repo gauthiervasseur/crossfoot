@@ -7,7 +7,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let uidN = 1;
   const uid = (p) => p + uidN++ + Math.random().toString(36).slice(2, 6);
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
 
   /* =============================================================== storage */
 
@@ -57,13 +57,14 @@
     theme: null, themeCss: null, themeWarnings: [],
     leftTab: 'fields', fieldSearch: '',
     lastPivot: null, pendingGame: null,
+    calcs: [], // calculated measures: { id, name, formula, format, decimals }
   };
 
   function newSheet(name) {
     return {
       id: uid('s'), name, mark: 'auto',
       shelves: { columns: [], rows: [], values: [], color: [] },
-      opts: { totals: true, subtotals: true, heat: false, sort: 'label', labels: false },
+      opts: { totals: true, subtotals: true, heat: false, sort: 'label', labels: false, allPoints: false },
       pivotSort: null,
     };
   }
@@ -85,6 +86,8 @@
     return { id: uid('p'), field, agg: aggFor(f, shelf), grain: f.type === 'date' ? defaultGrain(f) : null };
   }
   const isMeasureField = (f) => f.type === 'records' || f.role === 'measure';
+  const isCalc = (f) => !!f && f.type === 'calc';
+  const dataFieldCount = (ds) => ds.fields.filter((f) => f.type !== 'records' && f.type !== 'calc').length;
 
   function refilter() { S.idx = S.ds ? T.filterIndex(S.ds, S.filters) : null; }
 
@@ -135,20 +138,31 @@
     const card = $('#datasetCard');
     if (!S.ds) {
       card.innerHTML = '<div class="ds-empty">No data yet<br><span>Load a CSV and start footing</span></div>';
-      $('#dimList').innerHTML = ''; $('#meaList').innerHTML = '';
+      $('#dimList').innerHTML = ''; $('#meaList').innerHTML = ''; $('#calcList').innerHTML = '';
       return;
     }
     card.innerHTML = `<div class="ds-name" title="${esc(S.ds.name)}">${esc(S.ds.name)}</div>
-      <div class="ds-meta">${S.ds.n.toLocaleString()} rows · ${S.ds.fields.length - 1} fields</div>`;
+      <div class="ds-meta">${S.ds.n.toLocaleString()} rows · ${dataFieldCount(S.ds)} fields</div>`;
     const q = S.fieldSearch.trim().toLowerCase();
-    const item = (f) => `<li class="field ${isMeasureField(f) ? 'mea' : 'dim'}" data-drag="field" data-field="${esc(f.name)}" tabindex="0"
+    const item = (f) => {
+      if (isCalc(f)) {
+        const err = T.measureSpec(S.ds, { field: f.name }).error;
+        return `<li class="field mea calc${err ? ' has-error' : ''}" data-drag="field" data-field="${esc(f.name)}" tabindex="0"
+          title="${esc(f.name)} = ${esc(f.calc.formula)}${err ? '\n⚠ ' + esc(err) : ''}\nDrag to Values, double-click to add, right-click to edit">
+          <span class="ftype t-calc">f(x)</span><span class="fname">${esc(f.name)}</span>${err ? '<span class="calc-warn" aria-label="Error">!</span>' : ''}
+          <button class="calc-edit" data-calc-edit="${esc(f.name)}" title="Edit calculation" aria-label="Edit ${esc(f.name)}">✎</button></li>`;
+      }
+      return `<li class="field ${isMeasureField(f) ? 'mea' : 'dim'}" data-drag="field" data-field="${esc(f.name)}" tabindex="0"
         title="${esc(f.name)} · ${f.type.toUpperCase()} · drag to a shelf, double-click to add, right-click for options">
         <span class="ftype t-${f.type}">${TYPE_TAG[f.type]}</span><span class="fname">${esc(f.name)}</span></li>`;
+    };
     const match = (f) => !q || f.name.toLowerCase().includes(q);
     const dims = S.ds.fields.filter((f) => !isMeasureField(f) && match(f));
-    const meas = S.ds.fields.filter((f) => isMeasureField(f) && match(f));
+    const meas = S.ds.fields.filter((f) => isMeasureField(f) && !isCalc(f) && match(f));
+    const calcs = S.ds.fields.filter((f) => isCalc(f) && match(f));
     $('#dimList').innerHTML = dims.map(item).join('') || '<li class="field-none">NONE</li>';
     $('#meaList').innerHTML = meas.map(item).join('') || '<li class="field-none">NONE</li>';
+    $('#calcList').innerHTML = calcs.map(item).join('');
   }
 
   /* ============================================================== shelves */
@@ -163,7 +177,8 @@
     const f = S.ds.byName[p.field];
     const asMeasure = shelf === 'values' || (shelf === 'color' && isMeasureField(f));
     const menu = asMeasure || f.type === 'date';
-    return `<div class="pill ${asMeasure ? 'mea' : 'dim'}${p.id === justDropped ? ' just-dropped' : ''}" data-drag="pill" data-shelf="${shelf}" data-pill="${p.id}" tabindex="0"
+    const calcCls = isCalc(f) ? ' calc' : '';
+    return `<div class="pill ${asMeasure ? 'mea' : 'dim'}${calcCls}${p.id === justDropped ? ' just-dropped' : ''}" data-drag="pill" data-shelf="${shelf}" data-pill="${p.id}" tabindex="0"
       title="${menu ? 'Click for options · ' : ''}Drag to move · drag off to remove">
       <span class="pill-text">${esc(pillLabel(p, shelf))}</span>${menu ? '<span class="pill-caret">▾</span>' : ''}<button class="pill-x" data-remove title="Remove" aria-label="Remove">×</button></div>`;
   }
@@ -244,6 +259,7 @@
     if (mark === 'table') {
       h += tog('totals', 'Totals', 'Grand totals') + tog('subtotals', 'Subtotals', 'Subtotals for each outer row group') + tog('heat', 'Heat', 'Shade cells by value');
     }
+    if (mark === 'scatter') h += tog('allPoints', 'All points', 'Plot every row instead of a 30,000-row sample (slower on big files). Only applies when no dimension is on Rows or Columns.');
     if (['bar', 'stacked', 'line', 'area', 'heatmap'].includes(mark)) h += tog('labels', 'Labels', 'Show values on the marks');
     if (['bar', 'stacked'].includes(mark)) {
       const lab = { label: 'A→Z', desc: 'high→low', asc: 'low→high' }[o.sort || 'label'];
@@ -407,6 +423,10 @@
   function setTheme(css, opts = {}) {
     let parsed;
     try { parsed = T.Theme.parse(css); } catch (e) { toast(e.message, 'error'); SFX.play('error'); return false; }
+    // A built-in theme (stored, saved in a workbook, or an older copy of a themes/ file)
+    // always loads in its current version, so palette updates reach everyone.
+    const builtIn = T.Theme.PRESETS[parsed.theme.name];
+    if (builtIn && css !== builtIn && /^\s*\/\* Crossfoot theme:/.test(css)) { css = builtIn; parsed = T.Theme.parse(css); }
     S.theme = parsed.theme; S.themeCss = css; S.themeWarnings = parsed.warnings;
     store.set('themeCss', css);
     T.Theme.apply(parsed, $('#viz')).then(() => invalidate('viz'));
@@ -639,6 +659,7 @@
     const f = payloadField(p);
     if (!f) return false;
     if (zone === 'trash') return p.kind === 'pill';
+    if (isCalc(f)) return zone === 'values' || zone === 'color'; // a formula over aggregates: never a row filter or a dimension
     if (zone === 'filters') return f.type !== 'records';
     if (f.type === 'records') return zone === 'values';
     return true;
@@ -829,7 +850,12 @@
     const f = S.ds.byName[pill.field];
     const items = [];
     const asMeasure = shelf === 'values' || (shelf === 'color' && isMeasureField(f));
-    if (asMeasure) {
+    if (isCalc(f)) {
+      items.push({ head: 'Calculation' });
+      items.push({ label: 'Edit calculation…', action: () => openCalcEditor(f.name) });
+      items.push({ head: 'Format' });
+      T.Calc.FORMATS.forEach(([k, label]) => items.push({ label, checked: (f.calc.format || 'number') === k, action: () => updateCalc(f.name, { format: k }) }));
+    } else if (asMeasure) {
       items.push({ head: 'Aggregation' });
       T.AGGS.filter(([k]) => T.allowedAggs(f).includes(k)).forEach(([k, label]) =>
         items.push({ label, checked: T.measureSpec(S.ds, pill).agg === k, action: () => { pill.agg = k; invalidate('shelves', 'viz'); } }));
@@ -840,7 +866,7 @@
     if (items.length) items.push({ sep: true });
     SHELVES.filter((s) => s !== shelf && canDrop({ kind: 'pill', shelf, id: pill.id }, s)).forEach((s) =>
       items.push({ label: 'Move to ' + s, action: () => { removePill(shelf, pill.id); if (s === 'values' || shelf === 'values') pill.agg = aggFor(f, s); if (s === 'color') sh.shelves.color = [pill]; else sh.shelves[s].push(pill); invalidate('shelves', 'viz'); } }));
-    if (f.type !== 'records') items.push({ label: 'Filter on ' + f.name, action: () => addFilter(f.name) });
+    if (f.type !== 'records' && !isCalc(f)) items.push({ label: 'Filter on ' + f.name, action: () => addFilter(f.name) });
     items.push({ label: 'Remove', action: () => { removePill(shelf, pill.id); SFX.play('remove'); invalidate('shelves', 'viz'); } });
     showMenu(el, items);
   }
@@ -848,6 +874,14 @@
   function fieldMenu(el, at) {
     const f = S.ds.byName[el.dataset.field];
     const items = [{ head: f.name }];
+    if (isCalc(f)) {
+      ['values', 'color'].forEach((s) => items.push({ label: 'Add to ' + s, action: () => quickAdd(f.name, s) }));
+      items.push({ sep: true });
+      items.push({ label: 'Edit calculation…', action: () => openCalcEditor(f.name) });
+      items.push({ label: 'Duplicate', action: () => openCalcEditor(null, { from: f.calc }) });
+      items.push({ label: 'Delete', action: () => deleteCalc(f.name) });
+      return showMenu(at || el, items);
+    }
     ['columns', 'rows', 'values', 'color'].forEach((s) => {
       if (canDrop({ kind: 'field', field: f.name }, s)) items.push({ label: 'Add to ' + s, action: () => quickAdd(f.name, s) });
     });
@@ -881,11 +915,22 @@
   function hideLoading() { $('#loading').hidden = true; }
   const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 30)));
 
+  // A browser tab holds about 4 GB; a parsed CSV takes roughly ten times its size on disk
+  // (2 million rows / 324 MB used 3.2 GB in Chrome). Text over ~512 MB cannot even be decoded.
+  const MAX_CSV_MB = 400;
+  const megabytes = (bytes) => (bytes / 1e6 >= 10 ? Math.round(bytes / 1e6).toLocaleString() : (bytes / 1e6).toFixed(1)) + ' MB';
+  const tooBigMessage = (file) => `${file.name} is ${megabytes(file.size)}; Crossfoot handles up to about ${MAX_CSV_MB} MB (around 2 million rows). ` +
+    'Filter or aggregate it first (one year, one region, or monthly totals), or split it into smaller files.';
+
   async function loadCSVFile(file) {
+    if (file.size > MAX_CSV_MB * 1e6) { toast(tooBigMessage(file), 'error'); SFX.play('error'); return; }
     showLoading('Loading ' + file.name);
     await nextFrame();
     try {
-      const text = T.decode(await file.arrayBuffer());
+      const buffer = await file.arrayBuffer();
+      const text = T.decode(buffer);
+      // Backstop: past the browser's string limit, decoding returns '' instead of failing.
+      if (!text && buffer.byteLength > 1e6) throw new Error(tooBigMessage(file));
       await nextFrame();
       setDataset(T.fromCSV(text, file.name));
     } catch (e) {
@@ -894,16 +939,17 @@
     } finally { hideLoading(); }
   }
 
+  const DEMO_NAME = 'meridian-debt-book.csv';
   async function loadDemo(preset, instant) {
-    if (instant) return setDataset(T.fromCSV(window.CROSSFOOT_DEMO_CSV, 'meridian-debt-book.csv'), preset); // deep link: no overlay
+    if (instant) return setDataset(T.fromCSV(window.CROSSFOOT_DEMO_CSV, DEMO_NAME), preset); // deep link: no overlay
     showLoading('Loading the Meridian debt book');
     await nextFrame();
     try {
-      setDataset(T.fromCSV(window.CROSSFOOT_DEMO_CSV, 'meridian-debt-book.csv'), preset);
+      setDataset(T.fromCSV(window.CROSSFOOT_DEMO_CSV, DEMO_NAME), preset);
     } finally { hideLoading(); }
   }
 
-  const signature = (ds) => ds.fields.map((f) => f.name + ':' + f.type).join('|');
+  const signature = (ds) => ds.fields.filter((f) => f.type !== 'calc').map((f) => f.name + ':' + f.type).join('|');
 
   function sanitizeSheets(sheets) {
     const ok = (p) => p && S.ds.byName[p.field];
@@ -921,7 +967,7 @@
   }
   function applyRoles(roles) {
     if (!roles) return;
-    Object.entries(roles).forEach(([name, role]) => { const f = S.ds.byName[name]; if (f && f.type !== 'records') f.role = role; });
+    Object.entries(roles).forEach(([name, role]) => { const f = S.ds.byName[name]; if (f && f.type !== 'records' && f.type !== 'calc') f.role = role; });
   }
 
   function setDataset(ds, preset) {
@@ -930,6 +976,7 @@
     S.sheets = [newSheet('Sheet 1')];
     S.active = 0;
     const saved = store.get('session.' + signature(ds), null);
+    setCalcs(saved && saved.calcs ? saved.calcs : ds.name === DEMO_NAME ? DEMO_CALCS : []);
     if (preset) applyPreset(preset);
     else if (S.pendingGame) { applyGame(S.pendingGame); S.pendingGame = null; toast('Saved workbook resumed'); }
     else if (saved && saved.sheets) {
@@ -938,7 +985,7 @@
       if (sheets.length) { S.sheets = sheets; S.active = Math.min(saved.active || 0, sheets.length - 1); }
       S.filters = sanitizeFilters(saved.filters);
       toast('Welcome back! Last layout for this file restored');
-    } else toast(ds.n.toLocaleString() + ' rows loaded · ' + (ds.fields.length - 1) + ' fields');
+    } else toast(ds.n.toLocaleString() + ' rows loaded · ' + dataFieldCount(ds) + ' fields');
     refilter();
     S.leftTab = 'fields';
     SFX.play('start');
@@ -954,13 +1001,13 @@
 
   function gameState() {
     const roles = {};
-    S.ds.fields.forEach((f) => { if (f.type !== 'records') roles[f.name] = f.role; });
-    return { sheets: S.sheets, active: S.active, filters: S.filters, roles };
+    S.ds.fields.forEach((f) => { if (f.type !== 'records' && f.type !== 'calc') roles[f.name] = f.role; });
+    return { sheets: S.sheets, active: S.active, filters: S.filters, roles, calcs: S.calcs };
   }
 
   function saveGame() {
     if (!S.ds) { toast('Load a CSV first', 'error'); SFX.play('error'); return; }
-    const game = Object.assign({ crossfoot: VERSION, savedAt: new Date().toISOString(), dataset: { name: S.ds.name, fields: S.ds.fields.filter((f) => f.type !== 'records').map((f) => ({ name: f.name, type: f.type })) }, themeCss: S.themeCss }, gameState());
+    const game = Object.assign({ crossfoot: VERSION, savedAt: new Date().toISOString(), dataset: { name: S.ds.name, fields: S.ds.fields.filter((f) => f.type !== 'records' && f.type !== 'calc').map((f) => ({ name: f.name, type: f.type })) }, themeCss: S.themeCss }, gameState());
     download(baseName() + '.crossfoot.json', JSON.stringify(game, null, 2), 'application/json');
     toast('Workbook saved (layout, filters & theme - not the data)');
     SFX.play('drop');
@@ -970,6 +1017,7 @@
     if (game.themeCss) setTheme(game.themeCss, { silent: true });
     if (!S.ds) return;
     applyRoles(game.roles);
+    if (game.calcs) setCalcs(game.calcs);
     const sheets = sanitizeSheets(game.sheets);
     S.sheets = sheets.length ? sheets : [newSheet('Sheet 1')];
     S.active = Math.min(game.active || 0, S.sheets.length - 1);
@@ -1058,7 +1106,367 @@
     t.className = 'toast' + (kind === 'error' ? ' error' : '');
     t.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (t.hidden = true), kind === 'error' ? 5000 : 2800);
+    // Long enough to read: about 60 ms per character, at least 2.8 s (5 s for errors), at most 14 s. A click closes it.
+    toastTimer = setTimeout(() => (t.hidden = true), Math.min(14000, Math.max(kind === 'error' ? 5000 : 2800, msg.length * 60)));
+  }
+
+  /* ========================================================= calculations */
+
+  // Examples that ship with the demo data (any CSV starts with none).
+  const DEMO_CALCS = [
+    // The weighted rate: interest over balances, not an average of row rates.
+    { name: 'Effective Rate %', formula: 'SUM([Annual Interest (k EUR)]) / SUM([Outstanding (k EUR)])', format: 'percent', decimals: 2 },
+    { name: 'Variance vs Budget (k EUR)', formula: 'SUM([Outstanding (k EUR)]) - SUM([Budget (k EUR)])', format: 'number', decimals: 0 },
+    { name: 'Variance vs Budget %', formula: 'SUM([Outstanding (k EUR)]) / SUM([Budget (k EUR)]) - 1', format: 'percent', decimals: 1 },
+    { name: 'Share of Outstanding', formula: 'SUM([Outstanding (k EUR)]) / TOTAL(SUM([Outstanding (k EUR)]))', format: 'percent', decimals: 1 },
+  ];
+
+  function cleanCalc(c) {
+    return { id: c.id || uid('c'), name: String(c.name || '').trim(), formula: String(c.formula || ''), format: c.format || 'number', decimals: c.decimals === undefined || c.decimals === '' ? null : c.decimals };
+  }
+  /** Register S.calcs as fields of type 'calc' (rebuilt each time, so compiled formulas never go stale). */
+  function syncCalcs() {
+    const ds = S.ds;
+    if (!ds) return;
+    ds.fields = ds.fields.filter((f) => f.type !== 'calc');
+    Object.keys(ds.byName).forEach((k) => { if (ds.byName[k].type === 'calc') delete ds.byName[k]; });
+    S.calcs.forEach((def) => {
+      if (!def.name || ds.byName[def.name]) return; // a real column wins over a clashing calculation name
+      const f = T.Calc.field(def);
+      ds.fields.push(f); ds.byName[def.name] = f;
+    });
+  }
+  function setCalcs(list) { S.calcs = (list || []).filter((c) => c && c.name).map(cleanCalc); syncCalcs(); }
+
+  const forEachPill = (fn) => S.sheets.forEach((sh) => SHELVES.forEach((k) => sh.shelves[k].forEach((p) => fn(p, sh, k))));
+
+  function updateCalc(name, patch) {
+    const def = S.calcs.find((c) => c.name === name);
+    if (!def) return;
+    Object.assign(def, patch);
+    syncCalcs();
+    invalidate();
+  }
+  function deleteCalc(name) {
+    S.calcs = S.calcs.filter((c) => c.name !== name);
+    S.sheets.forEach((sh) => SHELVES.forEach((k) => (sh.shelves[k] = sh.shelves[k].filter((p) => p.field !== name))));
+    syncCalcs();
+    SFX.play('remove');
+    toast('Calculation deleted · ' + name);
+    invalidate();
+  }
+
+  const FIELD_PICK = () => S.ds.fields.filter((f) => f.type !== 'calc');
+  const uniqueCalcName = (base, self) => {
+    let name = base, n = 2;
+    const taken = (x) => (S.ds.byName[x] && x !== self);
+    while (taken(name)) name = base + ' ' + n++;
+    return name;
+  };
+  const shortName = (f) => f.replace(/\s*\((\$|€|%|k\s*\w+)\)\s*$/i, '');
+
+  // Guided operators: the symbol on the disc, the formula operator, the sentence verb.
+  const OPS = [
+    { k: '/', sym: '÷', word: 'divided by' },
+    { k: '*', sym: '×', word: 'multiplied by' },
+    { k: '+', sym: '+', word: 'plus' },
+    { k: '-', sym: '−', word: 'minus' },
+    { k: 'share', sym: '%', word: 'as a share of its total' },
+  ];
+  const TEMPLATES = [
+    { id: 'ratio', label: 'Ratio', sym: 'A ÷ B', op: '/', format: 'number', tip: 'One measure per unit of another: sales per unit, sales per order' },
+    { id: 'rate', label: 'Rate %', sym: 'A ÷ B %', op: '/', format: 'percent', tip: 'A percentage of another measure: margin, conversion, close rate' },
+    { id: 'diff', label: 'Difference', sym: 'A − B', op: '-', format: 'number', tip: 'A gap between two measures: revenue minus incentives' },
+    { id: 'product', label: 'Product', sym: 'A × B', op: '*', format: 'number', tip: 'Two measures multiplied' },
+    { id: 'share', label: 'Share of total', sym: 'A ÷ Σ', op: 'share', format: 'percent', tip: 'Each bar or cell as a % of the grand total in view' },
+    { id: 'per-row', label: 'Per record', sym: 'A ÷ rows', op: '/', format: 'number', b: { agg: 'count', field: T.RECORDS }, tip: 'A measure divided by the number of rows' },
+  ];
+
+  /** The calculation editor. name: edit that calculation; opts.from: duplicate a definition. */
+  function openCalcEditor(name, opts = {}) {
+    if (!S.ds) return;
+    closeMenu();
+    const editing = name ? S.calcs.find((c) => c.name === name) : null;
+    const base = editing || opts.from || null;
+    const nums = FIELD_PICK().filter((f) => f.type === 'number' && f.role === 'measure');
+    const pickDefault = (j) => (nums[j] || nums[0] || S.ds.byName[T.RECORDS]).name;
+    const operand = (field, agg) => { const f = S.ds.byName[field]; return { field, agg: agg && T.allowedAggs(f).includes(agg) ? agg : T.defaultAgg(f) === 'avg' ? 'sum' : T.defaultAgg(f) }; };
+    const st = {
+      name: base ? (editing ? base.name : uniqueCalcName(base.name + ' copy')) : '',
+      nameTouched: !!base,
+      mode: 'guided',
+      a: operand(pickDefault(0)), op: '/', b: operand(pickDefault(1)),
+      formula: base ? base.formula : '',
+      format: base ? base.format || 'number' : 'number',
+      decimals: base ? base.decimals : null,
+      by: null,
+    };
+    if (base) {
+      const g = T.Calc.guided(base.formula);
+      if (g && S.ds.byName[g.a.field] && (!g.b || S.ds.byName[g.b.field])) {
+        st.a = operand(g.a.field, g.a.agg); st.op = g.op;
+        if (g.b) st.b = operand(g.b.field, g.b.agg);
+      } else st.mode = 'formula';
+    }
+    // Break the preview down by the sheet's first dimension, else a small text field.
+    const sh = sheet();
+    const sheetDim = sh.shelves.rows.concat(sh.shelves.columns).find((p) => !isMeasureField(S.ds.byName[p.field]));
+    const smallDim = FIELD_PICK().find((f) => f.type === 'string' && !isMeasureField(f) && T.domain(S.ds, f).length <= 30);
+    st.by = sheetDim ? sheetDim.field : smallDim ? smallDim.name : '';
+
+    const guidedFormula = () => (st.op === 'share'
+      ? T.Calc.aggText(st.a.agg, st.a.field) + ' / TOTAL(' + T.Calc.aggText(st.a.agg, st.a.field) + ')'
+      : T.Calc.aggText(st.a.agg, st.a.field) + ' ' + st.op + ' ' + T.Calc.aggText(st.b.agg, st.b.field));
+    const currentFormula = () => (st.mode === 'guided' ? guidedFormula() : st.formula);
+    const suggestName = () => {
+      const A = shortName(st.a.field), B = st.b.field === T.RECORDS ? 'Record' : shortName(st.b.field);
+      if (st.op === 'share') return A + ' Share of Total';
+      if (st.op === '/') return st.format === 'percent' ? A + ' / ' + B + ' %' : A + ' per ' + B;
+      return A + ' ' + OPS.find((o) => o.k === st.op).sym + ' ' + B;
+    };
+
+    const fieldOptions = (sel) => {
+      const group = (label, list) => list.length ? `<optgroup label="${label}">${list.map((f) => `<option value="${esc(f.name)}"${f.name === sel ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</optgroup>` : '';
+      const all = FIELD_PICK();
+      return group('Measures', all.filter(isMeasureField)) + group('Dimensions (counted)', all.filter((f) => !isMeasureField(f)));
+    };
+    const aggOptions = (o) => T.AGGS.filter(([k]) => T.allowedAggs(S.ds.byName[o.field]).includes(k))
+      .map(([k, label]) => `<option value="${k}"${k === o.agg ? ' selected' : ''}>${label}</option>`).join('');
+    const operandHTML = (key, o) => `<div class="operand" data-operand="${key}">
+        <span class="operand-tag">${key.toUpperCase()}</span>
+        <label><span>Aggregate</span><select data-calc-agg="${key}">${aggOptions(o)}</select></label>
+        <label><span>of</span><select data-calc-field="${key}">${fieldOptions(o.field)}</select></label>
+      </div>`;
+    const chips = FIELD_PICK().map((f) => {
+      const agg = isMeasureField(f) ? (T.defaultAgg(f) === 'avg' ? 'sum' : T.defaultAgg(f)) : 'countd';
+      return `<button type="button" class="calc-chip ${isMeasureField(f) ? 'mea' : 'dim'}" data-calc-insert="${esc(T.Calc.aggText(agg, f.name))}" data-name="${esc(f.name.toLowerCase())}" title="Insert ${esc(T.Calc.aggText(agg, f.name))}">${esc(f.name)}</button>`;
+    }).join('') + S.calcs.filter((c) => !editing || c.name !== editing.name).map((c) =>
+      `<button type="button" class="calc-chip calc" data-calc-insert="${esc(T.Calc.quote(c.name))}" data-name="${esc(c.name.toLowerCase())}" title="Insert the calculation ${esc(c.name)}">f(x) ${esc(c.name)}</button>`).join('');
+    const KEYS = [['+', ' + '], ['−', ' - '], ['×', ' * '], ['÷', ' / '], ['(', '('], [')', ')'], ['^', '^']];
+    const FNS = [['TOTAL( )', 'TOTAL()', 'The same expression over every row in view: use it for % of total'], ['ROUND( , 1)', 'ROUND(, 1)', 'Round to n decimals'], ['ABS( )', 'ABS()', 'Absolute value'], ['SQRT( )', 'SQRT()', 'Square root']];
+    const AGGF = ['SUM', 'AVG', 'MEDIAN', 'MIN', 'MAX', 'COUNT', 'COUNTD'];
+    const byOptions = '<option value="">Total only</option>' + FIELD_PICK().filter((f) => !isMeasureField(f) && f.type !== 'date')
+      .map((f) => `<option value="${esc(f.name)}"${f.name === st.by ? ' selected' : ''}>${esc(f.name)}</option>`).join('');
+
+    const m = $('#modal');
+    m.innerHTML = `<div class="modal-box calc-box" role="dialog" aria-modal="true" aria-labelledby="calcTitle">
+      <div class="calc-head">
+        <div><div class="calc-kicker">OLAP formula · computed for every cell, bar and total</div>
+        <h2 id="calcTitle">${editing ? 'Edit calculation' : 'New calculation'}</h2></div>
+        <button class="calc-close" data-close-modal aria-label="Close">×</button>
+      </div>
+      <div class="calc-grid">
+        <div class="calc-main">
+          <label class="calc-name"><span>Name</span><input id="calcName" autocomplete="off" spellcheck="false" placeholder="e.g. Gross Margin %" value="${esc(st.name)}"></label>
+          <div class="calc-modes" role="tablist" aria-label="Editor">
+            <button type="button" role="tab" data-calc-mode="guided">Guided</button>
+            <button type="button" role="tab" data-calc-mode="formula">Formula</button>
+          </div>
+          <section class="calc-pane" data-pane="guided">
+            <div class="calc-templates" aria-label="Start from">${TEMPLATES.map((t) => `<button type="button" class="calc-tpl" data-calc-tpl="${t.id}" title="${esc(t.tip)}"><b>${esc(t.sym)}</b>${esc(t.label)}</button>`).join('')}</div>
+            <div class="calc-eq">
+              ${operandHTML('a', st.a)}
+              <div class="calc-ops" role="radiogroup" aria-label="Operator">${OPS.map((o) => `<button type="button" role="radio" class="calc-op" data-calc-op="${o.k}" title="${esc(o.word)}">${o.sym}</button>`).join('')}</div>
+              <div class="operand-b">${operandHTML('b', st.b)}<div class="operand total-card"><span class="operand-tag">Σ</span><b>TOTAL of A</b><span>over every row in view, after filters</span></div></div>
+            </div>
+            <p class="calc-sentence" id="calcSentence"></p>
+          </section>
+          <section class="calc-pane" data-pane="formula">
+            <textarea id="calcFormula" class="calc-formula" spellcheck="false" autocomplete="off" rows="3" placeholder="SUM([Annual Interest (k EUR)]) / SUM([Outstanding (k EUR)])"></textarea>
+            <div class="calc-status" id="calcStatus" role="status" aria-live="polite"></div>
+            <div class="calc-keys">
+              ${KEYS.map(([l, ins]) => `<button type="button" class="calc-key" data-calc-insert="${esc(ins)}">${esc(l)}</button>`).join('')}
+              <span class="calc-keys-sep"></span>
+              ${AGGF.map((f) => `<button type="button" class="calc-key fn" data-calc-wrap="${f}" title="${f}( ) around the selection, or insert ${f}([ ])">${f}</button>`).join('')}
+              ${FNS.map(([l, ins, tip]) => `<button type="button" class="calc-key fn" data-calc-insert="${esc(ins)}" data-calc-back="${ins.endsWith(', 1)') ? 4 : 1}" title="${esc(tip)}">${esc(l)}</button>`).join('')}
+            </div>
+            <div class="calc-fieldbox">
+              <input class="search small" id="calcFieldSearch" placeholder="Fields: click to insert" autocomplete="off" spellcheck="false">
+              <div class="calc-chips" id="calcChips">${chips}</div>
+            </div>
+          </section>
+          <div class="calc-format">
+            <div><span class="calc-label">Format</span><div class="seg" id="calcFormats">${T.Calc.FORMATS.map(([k, l]) => `<button type="button" data-calc-format="${k}">${esc(l)}</button>`).join('')}</div></div>
+            <div><span class="calc-label">Decimals</span><div class="seg" id="calcDecimals">${[['', 'Auto'], ['0', '0'], ['1', '1'], ['2', '2']].map(([k, l]) => `<button type="button" data-calc-dec="${k}">${l}</button>`).join('')}</div></div>
+          </div>
+        </div>
+        <aside class="calc-preview" aria-label="Preview">
+          <div class="pv-head"><span>Preview</span><label>by <select id="calcBy">${byOptions}</select></label></div>
+          <div class="pv-body" id="calcPreview"></div>
+          <p class="pv-note">${S.idx.length.toLocaleString()} rows in view, after filters. Each line is computed from its own aggregates, like a cell of the pivot.</p>
+        </aside>
+      </div>
+      <div class="calc-foot">
+        ${editing ? '<button type="button" class="btn ghost danger" data-calc-delete>Delete</button>' : ''}
+        <span class="calc-foot-gap"></span>
+        <button type="button" class="btn" data-close-modal>Cancel</button>
+        <button type="button" class="btn btn-primary" data-calc-save>${editing ? 'Save changes' : 'Create and add to Values'}</button>
+      </div>
+    </div>`;
+    m.hidden = false;
+    const box = $('.calc-box', m);
+    const ta = $('#calcFormula', m), nameIn = $('#calcName', m);
+    ta.value = st.formula || guidedFormula();
+    let draft = null; // { def, spec, ok }
+
+    function validateName() {
+      const n = nameIn.value.trim();
+      if (!n) return 'Give the calculation a name';
+      if (/[[\]]/.test(n)) return 'Names cannot contain [ or ]';
+      const clash = S.ds.byName[n];
+      if (clash && !(editing && n === editing.name)) return clash.type === 'calc' ? 'Another calculation already has this name' : 'A column of the CSV already has this name';
+      return null;
+    }
+
+    function refresh() {
+      // Modes
+      $$('[data-calc-mode]', box).forEach((b) => { const on = b.dataset.calcMode === st.mode; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', on); });
+      $$('[data-pane]', box).forEach((p) => (p.hidden = p.dataset.pane !== st.mode));
+      // Guided controls
+      $$('[data-calc-op]', box).forEach((b) => { const on = b.dataset.calcOp === st.op; b.classList.toggle('is-on', on); b.setAttribute('aria-checked', on); });
+      box.querySelector('.operand-b').classList.toggle('is-share', st.op === 'share');
+      const opw = OPS.find((o) => o.k === st.op);
+      const aggW = (o) => (T.AGGS.find(([k]) => k === o.agg) || [, o.agg])[1].toLowerCase();
+      const nm = nameIn.value.trim() || 'The result';
+      $('#calcSentence', box).innerHTML = st.op === 'share'
+        ? `<b>${esc(nm)}</b> = ${esc(aggW(st.a))} of <b>${esc(st.a.field)}</b> in each group, divided by the same ${esc(aggW(st.a))} over all rows in view.`
+        : `<b>${esc(nm)}</b> = ${esc(aggW(st.a))} of <b>${esc(st.a.field)}</b> ${opw.word} ${esc(aggW(st.b))} of <b>${esc(st.b.field)}</b>, for each group.`;
+      // Format
+      $$('[data-calc-format]', box).forEach((b) => b.classList.toggle('is-on', b.dataset.calcFormat === st.format));
+      $$('[data-calc-dec]', box).forEach((b) => b.classList.toggle('is-on', String(st.decimals == null ? '' : st.decimals) === b.dataset.calcDec));
+      // Compile and preview
+      const def = { name: nameIn.value.trim() || 'Untitled', formula: currentFormula(), format: st.format, decimals: st.decimals };
+      const spec = T.Calc.spec(S.ds, T.Calc.field(def));
+      draft = { def, spec, ok: !spec.error };
+      const status = $('#calcStatus', box);
+      const nameErr = validateName();
+      if (spec.error) {
+        const c = T.Calc.compile(S.ds, def);
+        const f = def.formula, p = Math.min(c.pos, f.length);
+        status.className = 'calc-status err';
+        status.innerHTML = `<span class="st-icon" aria-hidden="true">!</span><div><b>${esc(spec.error)}</b>` +
+          (st.mode === 'formula' ? `<code class="st-echo">${esc(f.slice(0, p))}<mark>${esc(f.slice(p, p + 1) || ' ')}</mark>${esc(f.slice(p + 1))}</code>` : '') + '</div>';
+      } else {
+        status.className = 'calc-status ok';
+        status.innerHTML = `<span class="st-icon" aria-hidden="true">✓</span><div><b>Valid formula</b><code class="st-echo">${esc(def.formula)}</code></div>`;
+      }
+      $('[data-calc-save]', box).disabled = !!spec.error || !!nameErr;
+      $('[data-calc-save]', box).title = spec.error ? 'Fix the formula first' : nameErr || '';
+      nameIn.classList.toggle('invalid', !!nameErr && nameIn.value.trim() !== '');
+      nameIn.title = nameErr || '';
+      // Preview: total plus one line per member of the "by" dimension.
+      const pv = $('#calcPreview', box);
+      if (spec.error) { pv.innerHTML = '<div class="pv-empty">The preview appears when the formula is valid.</div>'; return; }
+      const total = T.groupBy(S.idx, [], [spec])[0];
+      let rows = '';
+      if (st.by && S.ds.byName[st.by]) {
+        const dim = T.dimSpec(S.ds, { field: st.by, grain: null });
+        const groups = T.groupBy(S.idx, [dim], [spec]).sort((x, y) => T.cmpKeys(x.keys, y.keys));
+        const vals = groups.map((g) => g.vals[0]).filter((v) => v !== null);
+        const mx = Math.max(...vals.map(Math.abs), 0) || 1;
+        rows = groups.slice(0, 12).map((g) => {
+          const v = g.vals[0], w = v === null ? 0 : Math.abs(v) / mx * 100;
+          return `<tr><th title="${esc(dim.fmt(g.keys[0]))}">${esc(dim.fmt(g.keys[0]))}</th><td class="pv-bar"><span style="width:${w.toFixed(1)}%"${v < 0 ? ' class="neg"' : ''}></span></td><td>${esc(v === null ? '–' : spec.fmt(v))}</td></tr>`;
+        }).join('') + (groups.length > 12 ? `<tr class="more"><th colspan="3">+ ${groups.length - 12} more</th></tr>` : '');
+      }
+      const tv = total ? total.vals[0] : null;
+      pv.innerHTML = `<div class="pv-total"><span>Total</span><b>${esc(tv === null ? '–' : spec.fmt(tv))}</b></div>` + (rows ? `<table class="pv-table">${rows}</table>` : '');
+    }
+
+    function setGuided(patch) {
+      Object.assign(st, patch);
+      ['a', 'b'].forEach((k) => {
+        const sel = $(`[data-calc-agg="${k}"]`, box);
+        sel.innerHTML = aggOptions(st[k]);
+        $(`[data-calc-field="${k}"]`, box).value = st[k].field;
+      });
+      if (!st.nameTouched) nameIn.value = uniqueCalcName(suggestName(), editing && editing.name);
+      ta.value = guidedFormula();
+      refresh();
+    }
+    function insertAtCursor(text, back) {
+      const s0 = ta.selectionStart, s1 = ta.selectionEnd;
+      ta.setRangeText(text, s0, s1, 'end');
+      if (back) ta.selectionStart = ta.selectionEnd = ta.selectionEnd - back;
+      ta.focus();
+      st.formula = ta.value; refresh();
+    }
+
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b || !box.contains(b)) return;
+      if (b.dataset.calcMode) {
+        if (b.dataset.calcMode === st.mode) return;
+        if (b.dataset.calcMode === 'formula') { st.formula = guidedFormula(); ta.value = st.formula; st.mode = 'formula'; refresh(); ta.focus(); return; }
+        const g = T.Calc.guided(ta.value);
+        if (!g || !S.ds.byName[g.a.field] || (g.b && !S.ds.byName[g.b.field])) { toast('This formula is too custom for the guided view: keep editing it as a formula', 'error'); return; }
+        st.mode = 'guided';
+        return setGuided({ a: operand(g.a.field, g.a.agg), op: g.op, b: g.b ? operand(g.b.field, g.b.agg) : st.b });
+      }
+      if (b.dataset.calcOp) return setGuided({ op: b.dataset.calcOp });
+      if (b.dataset.calcTpl) {
+        const t = TEMPLATES.find((x) => x.id === b.dataset.calcTpl);
+        st.format = t.format; st.decimals = t.format === 'percent' ? 1 : null;
+        st.mode = 'guided';
+        return setGuided({ op: t.op, b: t.b ? Object.assign({}, t.b) : st.b.field === T.RECORDS ? operand(pickDefault(1)) : st.b });
+      }
+      if (b.dataset.calcFormat) { st.format = b.dataset.calcFormat; if (!st.nameTouched) nameIn.value = uniqueCalcName(suggestName(), editing && editing.name); return refresh(); }
+      if (b.dataset.calcDec !== undefined) { st.decimals = b.dataset.calcDec === '' ? null : +b.dataset.calcDec; return refresh(); }
+      if (b.dataset.calcInsert !== undefined) return insertAtCursor(b.dataset.calcInsert, +(b.dataset.calcBack || 0));
+      if (b.dataset.calcWrap) {
+        const fn = b.dataset.calcWrap, s0 = ta.selectionStart, s1 = ta.selectionEnd, sel = ta.value.slice(s0, s1);
+        return sel ? insertAtCursor(fn + '(' + (sel.trim().startsWith('[') ? sel : '[' + sel + ']') + ')') : insertAtCursor(fn + '([])', 2);
+      }
+      if ('calcDelete' in b.dataset) { closeModal(); return deleteCalc(editing.name); }
+      if ('calcSave' in b.dataset) return save();
+    });
+    box.addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset.calcAgg) { st[t.dataset.calcAgg].agg = t.value; return setGuided({}); }
+      if (t.dataset.calcField) { const k = t.dataset.calcField; st[k] = operand(t.value, st[k].agg); return setGuided({}); }
+      if (t.id === 'calcBy') { st.by = t.value; refresh(); }
+    });
+    let timer = 0;
+    ta.addEventListener('input', () => { st.formula = ta.value; clearTimeout(timer); timer = setTimeout(refresh, 120); });
+    nameIn.addEventListener('input', () => { st.nameTouched = true; refresh(); });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.target === nameIn || ((e.metaKey || e.ctrlKey) && e.target === ta))) { e.preventDefault(); save(); }
+    });
+    $('#calcFieldSearch', box).addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      $$('.calc-chip', box).forEach((c) => (c.hidden = !!q && !c.dataset.name.includes(q)));
+    });
+
+    function save() {
+      refresh();
+      if (!draft || !draft.ok || validateName()) { SFX.play('error'); return; }
+      const def = cleanCalc(Object.assign({}, editing || {}, draft.def, { name: nameIn.value.trim() }));
+      if (editing) {
+        const old = editing.name;
+        Object.assign(editing, def);
+        if (old !== def.name) {
+          forEachPill((p) => { if (p.field === old) p.field = def.name; });
+          S.calcs.forEach((c) => { if (c !== editing) c.formula = T.Calc.renameRef(c.formula, old, def.name); });
+        }
+        syncCalcs();
+        toast('Calculation saved · ' + def.name);
+      } else {
+        S.calcs.push(def);
+        syncCalcs();
+        const sh = sheet();
+        const pill = newPill(def.name, 'values');
+        sh.shelves.values.push(pill);
+        justDropped = pill.id;
+        toast('Calculation added to Values · ' + def.name);
+      }
+      SFX.play('drop');
+      closeModal();
+      invalidate();
+    }
+
+    refresh();
+    if (!editing && !opts.from) nameIn.value = uniqueCalcName(suggestName()), refresh();
+    (editing ? nameIn : $('.calc-tpl', box)).focus();
   }
 
   /* ================================================================= help */
@@ -1072,12 +1480,14 @@
         <li><b>Drag fields</b> from the left onto <b>Columns</b>, <b>Rows</b>, <b>Values</b> and <b>Color</b>. Blue pills are dimensions, green pills are measures.</li>
         <li><b>Pick a chart</b> - or leave Auto and Crossfoot chooses.</li>
         <li><b>Pivot</b> - drag pills between shelves, reorder them, or hit ⇄ to swap rows and columns. Click table headers to sort.</li>
-        <li><b>Tune</b> - click a pill to change its aggregation (Sum, Average…) or date level (Year, Month…). Rates and percentages start as Average.</li>
+        <li><b>Tune</b> - click a pill to change its aggregation (Sum, Average…) or date level (Year, Month…). Rates, percentages, prices and day counts start as Average.</li>
         <li><b>Balances are stocks</b> - month-end positions add up within a month, not across months. Filter to one month end, or chart them by month.</li>
+        <li><b>Averages are unweighted</b> - an Average of Rate (%) treats a 1 M overdraft like a 500 M bond. For the weighted rate, use a calculation such as SUM(Annual Interest) ÷ SUM(Outstanding): the demo's Effective Rate %.</li>
+        <li><b>Calculate</b> - click <b>f(x) New calculation</b> (under the measures, or next to Values) to build a formula over aggregates: effective rates, budget variances, shares of total. It is worked out for every cell, bar and total; TOTAL( ) gives shares of the total.</li>
         <li><b>Filter</b> - drop a field on Filters (shelf or tab). Filters apply to every sheet.</li>
         <li><b>Remove</b> - drag a pill off its shelf, or hit its ×.</li>
         <li><b>Theme CSS</b> - load a .css file with your colors and fonts; charts and tables follow it.</li>
-        <li><b>Save / Open</b> - store your layout, filters and theme in a .crossfoot.json file. Data stays in the CSV.</li>
+        <li><b>Save / Open</b> - store your layout, filters and theme in a .crossfoot.json file, with your calculations. Data stays in the CSV.</li>
       </ol>
       <div class="keys"><span><kbd>Double-click</kbd> add field</span><span><kbd>Right-click</kbd> field options</span><span><kbd>Del</kbd> remove focused pill</span><span><kbd>Esc</kbd> close</span></div>
       <p class="privacy">Your data never leaves this computer. Crossfoot runs entirely in your browser.</p>
@@ -1102,13 +1512,15 @@
       S.filters.push({ id: uid('f'), field: 'Month End', kind: T.filterKind(f), excluded: [], min: last, max: last, keepNull: false, search: '' });
     };
     const OUT = 'Outstanding (k EUR)';
+    const V = (field, extra) => P(field, Object.assign({ shelf: 'values' }, extra));
     const presets = {
       table: () => { latest(); set({ shelves: { rows: [P('Region'), P('Entity')], columns: [P('Category')], values: [P(OUT, { shelf: 'values' })] }, mark: 'table', opts: { heat: true } }); },
       bar: () => { latest(); set({ shelves: { columns: [P('Instrument')], values: [P(OUT, { shelf: 'values' })], color: [P('Region')] }, mark: 'stacked', opts: { sort: 'desc' } }); },
       line: () => set({ shelves: { columns: [P('Month End', { grain: 'month' })], values: [P(OUT, { shelf: 'values' })], color: [P('Category')] }, mark: 'line' }),
       scatter: () => { latest(); set({ shelves: { rows: [P('Entity')], values: [P(OUT, { shelf: 'values' }), P('Rate (%)', { shelf: 'values', agg: 'avg' }), P('Annual Interest (k EUR)', { shelf: 'values' })], color: [P('Region')] }, mark: 'scatter' }); },
       treemap: () => { latest(); set({ shelves: { rows: [P('Division'), P('Instrument')], values: [P(OUT, { shelf: 'values' })] }, mark: 'treemap' }); },
-      kpi: () => { latest(); set({ shelves: { values: [P(OUT, { shelf: 'values' }), P('Net Position (k EUR)', { shelf: 'values' }), P('Annual Interest (k EUR)', { shelf: 'values' }), P('Rate (%)', { shelf: 'values', agg: 'avg' })] }, mark: 'kpi' }); },
+      calc: () => { latest(); set({ shelves: { rows: [P('Region'), P('Category')], values: [V(OUT), V('Effective Rate %'), V('Variance vs Budget %'), V('Share of Outstanding')] }, mark: 'table' }); },
+      kpi: () => { latest(); set({ shelves: { values: [V(OUT), V('Net Position (k EUR)'), V('Annual Interest (k EUR)'), V('Effective Rate %')] }, mark: 'kpi' }); },
     };
     try { (presets[name] || presets.table)(); } catch (e) { console.warn('preset failed', e); }
   }
@@ -1129,6 +1541,9 @@
       const preset = e.target.closest('[data-preset]');
       if (preset) return setTheme(T.Theme.PRESETS[preset.dataset.preset]);
       if (!S.ds) return;
+      const ce = e.target.closest('[data-calc-edit]');
+      if (ce) return openCalcEditor(ce.dataset.calcEdit);
+      if (e.target.closest('[data-calc-new]')) return openCalcEditor();
       const x = e.target.closest('[data-remove]');
       if (x) { const pe = x.closest('.pill'); removePill(pe.dataset.shelf, pe.dataset.pill); SFX.play('remove'); return invalidate('shelves', 'viz'); }
       const gf = e.target.closest('[data-goto-filter]');
@@ -1168,6 +1583,7 @@
       else if (e.key === 'Enter' && a.matches('.pill[data-pill]')) { pillMenu(a); e.preventDefault(); }
     });
 
+    $('#toast').addEventListener('click', () => { clearTimeout(toastTimer); $('#toast').hidden = true; });
     $('#fieldSearch').addEventListener('input', (e) => { S.fieldSearch = e.target.value; renderFields(); });
 
     // Native file drop anywhere: .csv -> data, .css -> theme, .json -> saved game
